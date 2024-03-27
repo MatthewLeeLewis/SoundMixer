@@ -7,20 +7,47 @@ using System.IO;
 public class SoundscapeList : MonoBehaviour
 
 {
-    [SerializeField] private Transform content;
+    public static SoundscapeList Instance { get; private set; }
+    [SerializeField] private Transform contentPanel;
     [SerializeField] private Transform buttonPrefab;
+
+    string[] dir; // Instantiates a string array for directories.
 
     private void Awake()
     {
-        string[] dir = Directory.GetDirectories(Application.persistentDataPath + "/soundscapes");
+        if (Instance != null) // This if check ensures that multiple instances of this object do not exist and reports it if they do, and destroys the duplicate.
+        {
+            Debug.LogError("There's more than one SoundscapeList! " + transform + " - " + Instance);
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this; // This instantiates the instance.
 
-        foreach (Transform button in content)
+        dir = Directory.GetDirectories(Application.persistentDataPath + "/soundscapes"); // Sets dir to the directories in the AppData path.
+        SetUpButtons();
+    }
+
+    public string[] GetDir()
+    {
+        return dir;
+    }
+
+    private void SetUpButtons()
+    {
+        foreach (Transform button in contentPanel)
         {
             Destroy(button.gameObject);
         }
         foreach (string directory in dir)
         {
-            Instantiate(buttonPrefab, content.transform);
+            Transform newButtonTransform = Instantiate(buttonPrefab, contentPanel.transform);
+            SoundscapeButton newButton = newButtonTransform.GetComponent<SoundscapeButton>();
+
+            DirectoryInfo di = new DirectoryInfo(directory);
+            string dirName = di.Name;
+
+            newButton.SetText(dirName);
+            newButton.SetDir(directory);
         }
     }
 }

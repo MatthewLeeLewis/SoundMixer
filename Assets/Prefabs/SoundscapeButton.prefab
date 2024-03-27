@@ -249,6 +249,7 @@ GameObject:
   - component: {fileID: 1368882324174544381}
   - component: {fileID: 7605903568159430311}
   - component: {fileID: 3740560963678868501}
+  - component: {fileID: 3256650032066987780}
   m_Layer: 5
   m_Name: SoundscapeButton
   m_TagString: Untagged
@@ -359,6 +360,19 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &3256650032066987780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4401060871216647796}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be99dfd1aa1408742845f6076b6c116e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  textMeshPro: {fileID: 5500627309142689134}
 --- !u!1 &5263202811222815098
 GameObject:
   m_ObjectHideFlags: 0
