@@ -13,7 +13,7 @@ public class MusicPlayer : MonoBehaviour
     public string activeDirectory; // References the current directory from which to play music files.
 
     private AudioSource Source; // Reference to the source for the audio.
-    public AudioClip track; // Reference to the active track.
+    private AudioClip track; // Reference to the active track.
 
     List<string> Files = new List<string>(); // Reference to the list of files in the directory.
     List<AudioClip> Tracks = new List<AudioClip>(); // Reference to the list of tracks in the directory.
@@ -27,39 +27,23 @@ public class MusicPlayer : MonoBehaviour
             return;
         }
         Instance = this; // This instantiates the instance.
-
-        //Debug Code to set the active directory directly.
-        activeDirectory = @"C:\Users\poodl\AppData\LocalLow\MattLewisCode\SoundMixer\soundscapes\Sample"; 
-    }
-    
-    async void Start()
-    {
         Source = GetComponent<AudioSource>(); // Sets the audio source.
-
-        FileInfo[] files; // Creates a temporary array of strings for the files.
-        DirectoryInfo di = new DirectoryInfo(activeDirectory);
-        files = di.GetFiles(); // Adds all files from the active directory to the array.
-
-        
-        foreach (FileInfo file in files) // Iterates through the array.
-        {
-            string fileString = file.ToString();
-            if (fileString.EndsWith(".wav") || fileString.EndsWith(".mp3")) // If its a relevant audio file...
-            {
-                Files.Add(fileString); // Add it to the actual array.
-
-                AudioClip newClip = await LoadClip(fileString);
-                Tracks.Add(newClip);
-            }
-        }
-        PlayTrack(0);
     }
 
-    public void PlayTrack(int _listIndex)
+    public void PlayTrack()
     {
-        track = Tracks[_listIndex];
-        Source.clip = track;
-        Source.Play();
+        if (Tracks.Count != 0)
+        {
+            int _listIndex = UnityEngine.Random.Range(0, Tracks.Count);
+
+            track = Tracks[_listIndex];
+            Source.clip = track;
+            Source.Play();
+        } 
+        else 
+        {
+            Source.Stop();
+        }
     }
 
     async Task<AudioClip> LoadClip(string path)
@@ -88,6 +72,40 @@ public class MusicPlayer : MonoBehaviour
             }
         }
         return clip;
+    }
+
+    public async void SetDirectory(string dir)
+    {
+        if (activeDirectory != dir)
+        {
+            activeDirectory = dir;
+
+            FileInfo[] files; // Creates a temporary array of strings for the files.
+            DirectoryInfo di = new DirectoryInfo(activeDirectory);
+            files = di.GetFiles(); // Adds all files from the active directory to the array.
+
+            if (Files.Count != 0)
+            {
+                Files.Clear();
+            }
+            if (Tracks.Count != 0)
+            {
+                Tracks.Clear();
+            }
+        
+            foreach (FileInfo file in files) // Iterates through the array.
+            {
+                string fileString = file.ToString();
+                if (fileString.EndsWith(".wav") || fileString.EndsWith(".mp3")) // If its a relevant audio file...
+                {
+                    Files.Add(fileString); // Add it to the actual array.
+
+                    AudioClip newClip = await LoadClip(fileString);
+                    Tracks.Add(newClip);
+                }
+            }
+            PlayTrack();
+        }
     }
 
 }
