@@ -12,5 +12,9 @@ public class MainCanvas : MonoBehaviour
         {
             Directory.CreateDirectory(Application.persistentDataPath + "/soundscapes/Sample");
         }
+        if (!Directory.Exists(Application.persistentDataPath + "/music"))
+        {
+            Directory.CreateDirectory(Application.persistentDataPath + "/music/Sample");
+        }
     }
 }

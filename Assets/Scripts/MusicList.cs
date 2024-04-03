@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
-using System;
 
-public class SoundscapeList : MonoBehaviour
+public class MusicList : MonoBehaviour
 
 {
-    public static SoundscapeList Instance { get; private set; }
+    public static MusicList Instance { get; private set; }
     [SerializeField] private Transform contentPanel;
     [SerializeField] private Transform buttonPrefab;
 
@@ -18,19 +17,14 @@ public class SoundscapeList : MonoBehaviour
     {
         if (Instance != null) // This if check ensures that multiple instances of this object do not exist and reports it if they do, and destroys the duplicate.
         {
-            Debug.LogError("There's more than one SoundscapeList! " + transform + " - " + Instance);
+            Debug.LogError("There's more than one MusicList! " + transform + " - " + Instance);
             Destroy(gameObject);
             return;
         }
         Instance = this; // This instantiates the instance.
 
-        dir = Directory.GetDirectories(Application.persistentDataPath + "/soundscapes"); // Sets dir to the directories in the AppData path.
+        dir = Directory.GetDirectories(Application.persistentDataPath + "/music"); // Sets dir to the directories in the AppData path.
         SetUpButtons();
-    }
-
-    private void Start()
-    {
-        SoundscapeButton.OnSoundscapesChanged += SoundscapeButton_OnSoundscapesChanged;
     }
 
     public string[] GetDir()
@@ -47,7 +41,7 @@ public class SoundscapeList : MonoBehaviour
         foreach (string directory in dir)
         {
             Transform newButtonTransform = Instantiate(buttonPrefab, contentPanel.transform);
-            SoundscapeButton newButton = newButtonTransform.GetComponent<SoundscapeButton>();
+            MusicButton newButton = newButtonTransform.GetComponent<MusicButton>();
 
             DirectoryInfo di = new DirectoryInfo(directory);
             string dirName = di.Name;
@@ -55,10 +49,5 @@ public class SoundscapeList : MonoBehaviour
             newButton.SetText(dirName);
             newButton.SetDir(directory);
         }
-    }
-
-    private void SoundscapeButton_OnSoundscapesChanged(object sender, EventArgs e)
-    {
-        SetUpButtons();
     }
 }
