@@ -10,20 +10,15 @@ public class SoundscapeButton : MonoBehaviour
 {
     [SerializeField] private Button button;
     [SerializeField] private TextMeshProUGUI textMeshPro;
-    [SerializeField] private Toggle checkBox;
+    [SerializeField] private Toggle toggle;
     private string dir;
     private string soundscapeName;
-
+    
     public static event EventHandler OnSoundscapesChanged;
 
     private void Awake()
     {
         button.onClick.AddListener(() =>
-        {
-            UpdateActiveDirectories();
-            OnSoundscapesChanged?.Invoke(this, EventArgs.Empty);
-        });
-        checkBox.onValueChanged.AddListener( delegate
         {
             UpdateActiveDirectories();
             OnSoundscapesChanged?.Invoke(this, EventArgs.Empty);
@@ -46,15 +41,19 @@ public class SoundscapeButton : MonoBehaviour
         return dir;
     }
 
+    public string GetName()
+    {
+        return soundscapeName;
+    }
+
     private void UpdateActiveDirectories()
     {
         string path = Application.persistentDataPath + "/soundscapes/activeSoundscapes.ini";
 
         StreamReader reader = new StreamReader(path);
-        StreamWriter writer = new StreamWriter(path);
 
         List<string> linesList = new List<string>();
-        while (reader.ReadLine() != null)
+        while (reader.Peek() >= 0)
         {
             linesList.Add(reader.ReadLine());
         }
@@ -64,39 +63,35 @@ public class SoundscapeButton : MonoBehaviour
         if (linesList.Contains(soundscapeName))
         {
             linesList.Remove(soundscapeName);
-            writer.Close();
 
-            StreamWriter writer2 = new StreamWriter(path, false);
+            StreamWriter writer = new StreamWriter(path, false);
 
-            foreach (string line in linesList)
+            if (linesList.Count != 0)
             {
-                writer2.WriteLine(line);
+                foreach (string line in linesList)
+                {
+                    writer.WriteLine(line);
+                }
+                writer.Close();
             }
-            writer2.Close();
-            checkBox.isOn = true;
+            else
+            {
+                writer.Write("");
+                writer.Close();
+            }
+
+            ActiveSoundscapes.Instance.RemoveSoundscape(soundscapeName);
         }
         else
         {
+            StreamWriter writer = new StreamWriter(path, true);
             writer.WriteLine(soundscapeName);
             writer.Close();
-            checkBox.isOn = false;
-        }
+        }  
     }
-
-    private void InitialSetUp()
+    
+    public void SetToggle(bool input)
     {
-        string path = Application.persistentDataPath + "/soundscapes/activeSoundscapes.ini";
-        checkBox.isOn = false;
-
-        StreamReader reader = new StreamReader(path);
-
-        while(reader.ReadLine() != null)
-        {
-            if (reader.ReadLine() == soundscapeName)
-            {
-                checkBox.isOn = true;
-            }
-        }
-        reader.Close();
+        toggle.isOn = input;
     }
 }

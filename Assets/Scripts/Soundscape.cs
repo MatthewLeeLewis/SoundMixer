@@ -16,16 +16,6 @@ public class Soundscape : MonoBehaviour
     private string dir;
     string[] subDir;
 
-    private void Awake()
-    {
-        subDir = Directory.GetDirectories(dir);
-    }
-
-    private void Start()
-    {
-        SetUp();
-    }
-
     public void SetName(string name)
     {
         soundscapeName.text = name;
@@ -34,6 +24,8 @@ public class Soundscape : MonoBehaviour
     public void SetDir(string inputDir)
     {
         dir = inputDir;
+        subDir = Directory.GetDirectories(dir);
+        SetUp();
     }
 
     public void SetUp()
@@ -52,12 +44,18 @@ public class Soundscape : MonoBehaviour
             if (soundType == "LoopToggle")
             {
                 Transform newLoopingSoundTransform = Instantiate(loopingSoundPrefab, contentPanel.transform);
-                //TODO: Add Looping Sound
+                LoopingSound newLoopingSound = newLoopingSoundTransform.GetComponent<LoopingSound>();
+
+                newLoopingSound.SetName(dirName);
+                newLoopingSound.SetDir(directory);
             }
             else if (soundType == "Playlist")
             {
                 Transform newSoundPlaylistTransform = Instantiate(soundPlaylistPrefab, contentPanel.transform);
-                //TODO: Add Looping Sound
+                SoundPlaylist newSoundPlaylist = newSoundPlaylistTransform.GetComponent<SoundPlaylist>(); 
+
+                newSoundPlaylist.SetName(dirName);
+                newSoundPlaylist.SetDir(directory);
             }
         }
     }

@@ -28,6 +28,12 @@ public class ActiveSoundscapes : MonoBehaviour
         activeSoundscapes = new List<string>();
         ReadSoundscapes();
         SetUpSoundscapes();
+        SoundscapeList.Instance.SetToggles(activeSoundscapes);
+    }
+
+    private void Start()
+    {
+        SoundscapeButton.OnSoundscapesChanged += SoundscapeButton_OnSoundscapesChanged;
     }
 
     private void SetUpSoundscapes()
@@ -57,13 +63,21 @@ public class ActiveSoundscapes : MonoBehaviour
         string path = Application.persistentDataPath + "/soundscapes/activeSoundscapes.ini";
         StreamReader reader = new StreamReader(path);
         
-        while (reader.ReadLine() != null)
+        while (reader.Peek() >= 0)
         {
-            if (!activeSoundscapes.Contains(reader.ReadLine()))
+            string line = reader.ReadLine();
+            if (!activeSoundscapes.Contains(line))
             {
-                activeSoundscapes.Add(reader.ReadLine());
+                activeSoundscapes.Add(line);
             }
         }
         reader.Close();
+    }
+
+    private void SoundscapeButton_OnSoundscapesChanged(object sender, EventArgs e)
+    {
+        ReadSoundscapes();
+        SetUpSoundscapes();
+        SoundscapeList.Instance.SetToggles(activeSoundscapes);
     }
 }

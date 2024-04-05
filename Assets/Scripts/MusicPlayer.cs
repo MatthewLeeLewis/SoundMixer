@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 public class MusicPlayer : MonoBehaviour
 {
     public static MusicPlayer Instance { get; private set; }
+
+    public static event EventHandler OnMusicChanged;
     private bool active = false;
 
     public string activeDirectory; // References the current directory from which to play music files.
@@ -18,6 +20,8 @@ public class MusicPlayer : MonoBehaviour
 
     List<string> Files = new List<string>(); // Reference to the list of files in the directory.
     List<AudioClip> Tracks = new List<AudioClip>(); // Reference to the list of tracks in the directory.
+
+
 
     private void Update()
     {
@@ -41,6 +45,21 @@ public class MusicPlayer : MonoBehaviour
         }
         Instance = this; // This instantiates the instance.
         Source = GetComponent<AudioSource>(); // Sets the audio source.
+    }
+
+    private void Start()
+    {
+        Invoke("InitializePlayer", 0.1f);
+    }
+
+    public void InitializePlayer()
+    {
+        if (ReadSettings() != "None")
+        {
+            MusicList.Instance.SetActiveMusic(ReadSettings());
+            SetDirectory(ReadSettings());
+            OnMusicChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     public void PlayTrack()
@@ -127,5 +146,24 @@ public class MusicPlayer : MonoBehaviour
             active = true;
         }
     }
+
+    private string ReadSettings()
+    {
+        string path = Application.persistentDataPath + "/music/activeMusic.ini";
+
+        StreamReader reader = new StreamReader(path);
+        string readLine = reader.ReadLine();
+        
+        while (!readLine.StartsWith("Active"))
+        {
+            readLine = reader.ReadLine();
+        }
+        string[] subStrings = readLine.Split(" = ");
+        string active = subStrings[1];
+
+        reader.Close();
+
+        return active;
+    } 
 
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,21 +8,27 @@ using UnityEngine.UI;
 
 public class MusicButton : MonoBehaviour
 {
+    public static event EventHandler OnMusicChanged;
     [SerializeField] private Button button;
     [SerializeField] private TextMeshProUGUI textMeshPro;
+    [SerializeField] private Toggle toggle;
     private string dir;
+    private string musicButton_Name = "";
 
     private void Awake()
     {
         button.onClick.AddListener(() =>
         {
+            MusicList.Instance.SetActiveMusic(dir);
             MusicPlayer.Instance.SetDirectory(dir);
+            OnMusicChanged?.Invoke(this, EventArgs.Empty);
         });
     }
 
-    public void SetText(string text)
+    public void SetName(string text)
     {
-        textMeshPro.text = text;
+        musicButton_Name = text;
+        textMeshPro.text = musicButton_Name;
     }
 
     public void SetDir(string inputDir)
@@ -29,8 +36,13 @@ public class MusicButton : MonoBehaviour
         dir = inputDir;
     }
 
-    private string GetDir()
+    public string GetDir()
     {
         return dir;
+    }
+
+    public void SetToggle(bool input)
+    {
+        toggle.isOn = input;
     }
 }

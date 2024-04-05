@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
-using System;
 
 public class SoundscapeList : MonoBehaviour
 
@@ -28,11 +27,6 @@ public class SoundscapeList : MonoBehaviour
         SetUpButtons();
     }
 
-    private void Start()
-    {
-        SoundscapeButton.OnSoundscapesChanged += SoundscapeButton_OnSoundscapesChanged;
-    }
-
     public string[] GetDir()
     {
         return dir;
@@ -55,10 +49,21 @@ public class SoundscapeList : MonoBehaviour
             newButton.SetText(dirName);
             newButton.SetDir(directory);
         }
-    }
+    }  
 
-    private void SoundscapeButton_OnSoundscapesChanged(object sender, EventArgs e)
+    public void SetToggles(List<string> activeSoundscapes)
     {
-        SetUpButtons();
-    }
+        foreach (Transform button in contentPanel)
+        {
+            SoundscapeButton currentButton = button.GetComponent<SoundscapeButton>();
+            if (activeSoundscapes.Contains(currentButton.GetName()))
+            {
+                currentButton.SetToggle(true);
+            }
+            else
+            {
+                currentButton.SetToggle(false);
+            }
+        }
+    }  
 }
