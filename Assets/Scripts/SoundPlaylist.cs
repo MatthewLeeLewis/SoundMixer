@@ -295,11 +295,7 @@ public class SoundPlaylist : MonoBehaviour
 
         for (int i = 0; i < linesList.Count; i++)
         {
-            if (linesList[i].StartsWith("Active = "))
-            {
-                linesList[i] = "Active = " + soundToggle.isOn.ToString();
-            }
-            else if (linesList[i].StartsWith("MinTime = "))
+            if (linesList[i].StartsWith("MinTime = "))
             {
                 linesList[i] = "MinTime = " + minTime.ToString();
             }
@@ -315,6 +311,10 @@ public class SoundPlaylist : MonoBehaviour
             {
                 linesList[i] = "BaseVolume = " + baseVolume.ToString();
             }
+            else if (linesList[i].StartsWith("Active = "))
+            {
+                linesList[i] = "Active = " + soundToggle.isOn.ToString();
+            }
         }
 
         StreamWriter writer = new StreamWriter(path, false);
@@ -323,5 +323,10 @@ public class SoundPlaylist : MonoBehaviour
             writer.WriteLine(line);
         }
         writer.Close();
+    }
+
+    public void Silence()
+    {
+        StartCoroutine(FadeAudioSource.StartFade(Source, 3, 0f));
     }
 }

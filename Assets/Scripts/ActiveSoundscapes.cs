@@ -8,7 +8,7 @@ public class ActiveSoundscapes : MonoBehaviour
 {
     public static ActiveSoundscapes Instance { get; private set; }
 
-
+    private List<string> instantiatedSoundscapes;
 
     [SerializeField] private Transform contentPanel;
     [SerializeField] private Transform soundscapePrefab;
@@ -26,9 +26,10 @@ public class ActiveSoundscapes : MonoBehaviour
         Instance = this; // This instantiates the instance.
 
         activeSoundscapes = new List<string>();
+        instantiatedSoundscapes = new List<string>();
         ReadSoundscapes();
+        DestroyInactiveSoundscapes();
         SetUpSoundscapes();
-        SoundscapeList.Instance.SetToggles(activeSoundscapes);
     }
 
     private void Start()
@@ -38,23 +39,35 @@ public class ActiveSoundscapes : MonoBehaviour
 
     private void SetUpSoundscapes()
     {
+        /*
         foreach (Transform soundscape in contentPanel)
         {
-            Destroy(soundscape.gameObject);
+            Soundscape soundScape = soundscape.GetComponent<Soundscape>();
+            if (!activeSoundscapes.Contains(soundScape.GetName()))
+            {
+                Destroy(soundscape.gameObject);
+            }
         }
+        */
         foreach (string name in activeSoundscapes)
         {
-            Transform newSoundscapeTransform = Instantiate(soundscapePrefab, contentPanel.transform);
-            Soundscape newSoundscape = newSoundscapeTransform.GetComponent<Soundscape>();
+            if (!instantiatedSoundscapes.Contains(name))
+            {
+                Transform newSoundscapeTransform = Instantiate(soundscapePrefab, contentPanel.transform);
+                Soundscape newSoundscape = newSoundscapeTransform.GetComponent<Soundscape>();
 
-            newSoundscape.SetName(name);
-            newSoundscape.SetDir(Application.persistentDataPath + "/soundscapes/" + name);
+                newSoundscape.SetName(name);
+                newSoundscape.SetDir(Application.persistentDataPath + "/soundscapes/" + name);
+                instantiatedSoundscapes.Add(name);
+            }
         }
+        SoundscapeList.Instance.SetToggles(activeSoundscapes);
     }
 
     public void RemoveSoundscape(string input)
     {
         activeSoundscapes.Remove(input);
+        instantiatedSoundscapes.Remove(input);
         ReadSoundscapes();
     }
 
@@ -77,7 +90,33 @@ public class ActiveSoundscapes : MonoBehaviour
     private void SoundscapeButton_OnSoundscapesChanged(object sender, EventArgs e)
     {
         ReadSoundscapes();
+        SilenceInactiveSoundscapes();
         SetUpSoundscapes();
-        SoundscapeList.Instance.SetToggles(activeSoundscapes);
+    }
+
+    private void SilenceInactiveSoundscapes()
+    {
+        foreach (Transform soundscape in contentPanel)
+        {
+            Soundscape soundScape = soundscape.GetComponent<Soundscape>();
+            if (!activeSoundscapes.Contains(soundScape.GetName()))
+            {
+                soundScape.Silence();
+            }
+        }
+        Invoke("DestroyInactiveSoundscapes", 3);
+    }
+
+    private void DestroyInactiveSoundscapes()
+    {
+        foreach (Transform soundscape in contentPanel)
+        {
+            Soundscape soundScape = soundscape.GetComponent<Soundscape>();
+            if (!activeSoundscapes.Contains(soundScape.GetName()))
+            {
+                instantiatedSoundscapes.Remove(soundScape.GetName());
+                Destroy(soundscape.gameObject);
+            }
+        }
     }
 }

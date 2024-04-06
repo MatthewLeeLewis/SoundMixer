@@ -10,8 +10,12 @@ public class SoundscapeList : MonoBehaviour
     public static SoundscapeList Instance { get; private set; }
     [SerializeField] private Transform contentPanel;
     [SerializeField] private Transform buttonPrefab;
+    private List<string> instantiatedButtons = new List<string>();
+    [SerializeField] private Button plusButton;
+    [SerializeField] private Button refreshButton;
+    private PlusButtonPanel plusButtonPanel;
 
-    string[] dir; // Instantiates a string array for directories.
+    private List<string> dir = new List<string>(); // Instantiates a string array for directories.
 
     private void Awake()
     {
@@ -23,31 +27,50 @@ public class SoundscapeList : MonoBehaviour
         }
         Instance = this; // This instantiates the instance.
 
-        dir = Directory.GetDirectories(Application.persistentDataPath + "/soundscapes"); // Sets dir to the directories in the AppData path.
+        plusButtonPanel = GetComponentInChildren<PlusButtonPanel>();
+
+        SetUpDir(); // Sets dir to the directories in the AppData path.
         SetUpButtons();
+        SetUpMiscButtons();
     }
 
-    public string[] GetDir()
+    public void SetUpDir()
     {
-        return dir;
+        dir.Clear();
+        string[] dirArray = Directory.GetDirectories(Application.persistentDataPath + "/soundscapes");
+        foreach (string directory in dirArray)
+        {
+            dir.Add(directory);
+        }
     }
 
-    private void SetUpButtons()
+    public void SetUpButtons()
     {
         foreach (Transform button in contentPanel)
         {
-            Destroy(button.gameObject);
+            SoundscapeButton soundscapeButton = button.GetComponent<SoundscapeButton>();
+            
+            if (!dir.Contains(soundscapeButton.GetDir()))
+            {
+                instantiatedButtons.Remove(soundscapeButton.GetName());
+                Destroy(button.gameObject);
+                Destroy(button);
+            }
         }
         foreach (string directory in dir)
         {
-            Transform newButtonTransform = Instantiate(buttonPrefab, contentPanel.transform);
-            SoundscapeButton newButton = newButtonTransform.GetComponent<SoundscapeButton>();
-
             DirectoryInfo di = new DirectoryInfo(directory);
             string dirName = di.Name;
 
-            newButton.SetText(dirName);
-            newButton.SetDir(directory);
+            if (!instantiatedButtons.Contains(di.Name))
+            {
+                Transform newButtonTransform = Instantiate(buttonPrefab, contentPanel.transform);
+                SoundscapeButton newButton = newButtonTransform.GetComponent<SoundscapeButton>();
+
+                newButton.SetName(dirName);
+                newButton.SetDir(directory);
+                instantiatedButtons.Add(di.Name);
+            } 
         }
     }  
 
@@ -65,5 +88,17 @@ public class SoundscapeList : MonoBehaviour
                 currentButton.SetToggle(false);
             }
         }
-    }  
+    } 
+
+    private void SetUpMiscButtons()
+    {
+        plusButton.onClick.AddListener(() =>
+        {
+            plusButtonPanel.Show();
+        });
+        refreshButton.onClick.AddListener(() =>
+        {
+            
+        });
+    } 
 }

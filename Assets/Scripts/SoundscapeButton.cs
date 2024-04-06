@@ -22,10 +22,11 @@ public class SoundscapeButton : MonoBehaviour
         {
             UpdateActiveDirectories();
             OnSoundscapesChanged?.Invoke(this, EventArgs.Empty);
+            DisableSoundscapeButtons();
         });
     }
 
-    public void SetText(string text)
+    public void SetName(string text)
     {
         soundscapeName = text;
         textMeshPro.text = soundscapeName;
@@ -36,7 +37,7 @@ public class SoundscapeButton : MonoBehaviour
         dir = inputDir;
     }
 
-    private string GetDir()
+    public string GetDir()
     {
         return dir;
     }
@@ -93,5 +94,16 @@ public class SoundscapeButton : MonoBehaviour
     public void SetToggle(bool input)
     {
         toggle.isOn = input;
+    }
+
+    private void DisableSoundscapeButtons()
+    {
+        button.interactable = false;
+        Invoke("EnableSoundscapeButtons", 3);
+    }
+
+    private void EnableSoundscapeButtons()
+    {
+        button.interactable = true;
     }
 }

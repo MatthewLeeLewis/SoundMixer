@@ -9,9 +9,11 @@ using System.Threading.Tasks;
 public class MusicPlayer : MonoBehaviour
 {
     public static MusicPlayer Instance { get; private set; }
+    public static event EventHandler DisableMusicButtons;
 
     public static event EventHandler OnMusicChanged;
     private bool active = false;
+    private bool paused = false;
 
     public string activeDirectory; // References the current directory from which to play music files.
 
@@ -20,19 +22,27 @@ public class MusicPlayer : MonoBehaviour
 
     List<string> Files = new List<string>(); // Reference to the list of files in the directory.
     List<AudioClip> Tracks = new List<AudioClip>(); // Reference to the list of tracks in the directory.
+    private float baseVolume;
 
 
 
     private void Update()
     {
-        if (active == true && !Source.isPlaying)
+        if (paused == false)
         {
-            PlayTrack();
-        }
-        else if (active == true && Source.volume == 0)
-        {
-            PlayTrack();
-            StartCoroutine(FadeAudioSource.StartFade(Source, 3, 1f));
+            if (active == true && !Source.isPlaying)
+            {
+                PlayTrack();
+            }
+            else if (active == true && Source.volume == 0f)
+            {
+                PlayTrack();
+                StartCoroutine(FadeAudioSource.StartFade(Source, 3, baseVolume));
+            }
+            else if (active == false && Source.volume == 0f)
+            {
+                Source.Stop();
+            }
         }
     }
     private void Awake()
@@ -54,11 +64,42 @@ public class MusicPlayer : MonoBehaviour
 
     public void InitializePlayer()
     {
-        if (ReadSettings() != "None")
+        string path = Application.persistentDataPath + "/music/activeMusic.ini";
+
+        StreamReader reader = new StreamReader(path);
+
+        List<string> linesList = new List<string>();
+        while (reader.Peek() >= 0)
         {
-            MusicList.Instance.SetActiveMusic(ReadSettings());
-            SetDirectory(ReadSettings());
-            OnMusicChanged?.Invoke(this, EventArgs.Empty);
+            linesList.Add(reader.ReadLine());
+        }
+
+        reader.Close();
+
+        for (int i = 0; i < linesList.Count; i++)
+        {
+            if (linesList[i].StartsWith("BaseVolume = "))
+            {
+                string[] subStrings = linesList[i].Split(" = ");
+                
+                baseVolume = float.Parse(subStrings[1]);
+                MusicList.Instance.SetVolSlider(baseVolume);
+            }
+            else if (linesList[i].StartsWith("Active = "))
+            {
+                string[] subStrings = linesList[i].Split(" = ");
+                
+                if (subStrings[1] != "None")
+                {
+                    MusicList.Instance.SetActiveMusic(subStrings[1]);
+                    SetDirectory(subStrings[1]);
+                    OnMusicChanged?.Invoke(this, EventArgs.Empty);
+                }
+                if (subStrings[1] == "None")
+                {
+                    MusicList.Instance.SetActiveMusic(subStrings[1]);
+                }
+            }
         }
     }
 
@@ -71,12 +112,12 @@ public class MusicPlayer : MonoBehaviour
             track = Tracks[_listIndex];
             Source.clip = track;
             Source.Play();
-            active = true;
+            EngageActive();
         } 
         else 
         {
             Source.Stop();
-            active = false;
+            FalsifyActive();
         }
     }
 
@@ -110,11 +151,11 @@ public class MusicPlayer : MonoBehaviour
 
     public async void SetDirectory(string dir)
     {
-        if (activeDirectory != dir)
+        if (activeDirectory != dir || !Source.isPlaying)
         {
             if (active == true)
             {
-                active = false;
+                FalsifyActive();
                 StartCoroutine(FadeAudioSource.StartFade(Source, 3, 0f));
             }
             activeDirectory = dir;
@@ -143,27 +184,72 @@ public class MusicPlayer : MonoBehaviour
                     Tracks.Add(newClip);
                 }
             }
-            active = true;
+            EngageActive();
         }
     }
 
-    private string ReadSettings()
+    public void SetVolume(float input)
     {
-        string path = Application.persistentDataPath + "/music/activeMusic.ini";
+        baseVolume = input;
+        Source.volume = input;
+    }
 
-        StreamReader reader = new StreamReader(path);
-        string readLine = reader.ReadLine();
-        
-        while (!readLine.StartsWith("Active"))
+    public float GetVolume()
+    {
+        return baseVolume;
+    }
+
+    public void Skip()
+    {
+        if (active == true)
         {
-            readLine = reader.ReadLine();
+            MusicList.Instance.SetInteractable(false);
+            StartCoroutine(FadeAudioSource.StartFade(Source, 3, 0f));
+            DisableMusicButtons?.Invoke(this, EventArgs.Empty);
         }
-        string[] subStrings = readLine.Split(" = ");
-        string active = subStrings[1];
+    }
+    public void Pause()
+    {
+        if (active)
+        {
+            if (paused)
+            {
+                Source.Play();
+                MusicList.Instance.SetPauseText("Pause");
+            }
+            else
+            {
+                Source.Pause();
+                MusicList.Instance.SetPauseText("Play");
+            }
+            paused = !paused;
+        }
+    }
 
-        reader.Close();
+    public void Stop()
+    {
+        if (active)
+        {
+            FalsifyActive();
+            if (Source.isPlaying)
+            {
+                MusicList.Instance.SetInteractable(false);
+                StartCoroutine(FadeAudioSource.StartFade(Source, 3, 0f));
+                DisableMusicButtons?.Invoke(this, EventArgs.Empty);
+            }
+        } 
+    }
 
-        return active;
-    } 
-
+    private void FalsifyActive()
+    {
+        active = false;
+        paused = false;
+        MusicList.Instance.SetPauseText("Pause");
+        MusicList.Instance.SetInteractable(false);
+    }
+    private void EngageActive()
+    {
+        active = true;
+        MusicList.Instance.SetInteractable(true);
+    }
 }

@@ -3,17 +3,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using System.IO;
 
 public class MusicList : MonoBehaviour
 
 {
     public static MusicList Instance { get; private set; }
+
     [SerializeField] private Transform contentPanel;
     [SerializeField] private Transform buttonPrefab;
-    public string activeMusic = "";
+    [SerializeField] private Button stopButton;
+    [SerializeField] private Button pauseButton;
+    [SerializeField] private Button skipButton;
+    [SerializeField] private Slider volSlider;
+    [SerializeField] private Button folderButton;
+    [SerializeField] private Button refreshButton;
+    public string activeMusic = "None";
+    private List<string> instantiatedButtons = new List<string>();
 
-    string[] dir; // Instantiates a string array for directories.
+    private TextMeshProUGUI pauseText;
+
+    private List<string> dir = new List<string>(); // Instantiates a string array for directories.
 
     private void Awake()
     {
@@ -25,37 +36,54 @@ public class MusicList : MonoBehaviour
         }
         Instance = this; // This instantiates the instance.
 
-        dir = Directory.GetDirectories(Application.persistentDataPath + "/music"); // Sets dir to the directories in the AppData path.
+        SetUpDir(); // Sets dir to the directories in the AppData path.
         SetUpButtons();
     }
 
     private void Start()
     {
-        MusicPlayer.OnMusicChanged += MusicPlayer_OnMusicChanged;
-        MusicButton.OnMusicChanged += MusicButton_OnMusicChanged;
+        MusicPlayer.OnMusicChanged += OnMusicChanged;
+        MusicButton.OnMusicChanged += OnMusicChanged;
+        SetUpMusicSettings();
     }
 
-    public string[] GetDir()
+    private void SetUpDir()
     {
-        return dir;
+        dir.Clear();
+        string[] dirArray = Directory.GetDirectories(Application.persistentDataPath + "/music");
+        foreach (string directory in dirArray)
+        {
+            dir.Add(directory);
+        }
     }
 
     private void SetUpButtons()
     {
         foreach (Transform button in contentPanel)
         {
-            Destroy(button.gameObject);
+            MusicButton musicButton = button.GetComponent<MusicButton>();
+            
+            if (!dir.Contains(musicButton.GetDir()))
+            {
+                instantiatedButtons.Remove(musicButton.GetName());
+                Destroy(button.gameObject);
+                Destroy(button);
+            }
         }
         foreach (string directory in dir)
         {
-            Transform newButtonTransform = Instantiate(buttonPrefab, contentPanel.transform);
-            MusicButton newButton = newButtonTransform.GetComponent<MusicButton>();
-
             DirectoryInfo di = new DirectoryInfo(directory);
             string dirName = di.Name;
 
-            newButton.SetName(dirName);
-            newButton.SetDir(directory);
+            if (!instantiatedButtons.Contains(di.Name))
+            {
+                Transform newButtonTransform = Instantiate(buttonPrefab, contentPanel.transform);
+                MusicButton newButton = newButtonTransform.GetComponent<MusicButton>();
+
+                newButton.SetName(dirName);
+                newButton.SetDir(directory);
+                instantiatedButtons.Add(di.Name);
+            } 
         }
     }
 
@@ -65,23 +93,7 @@ public class MusicList : MonoBehaviour
         WriteSettings();
     }
 
-    private void MusicButton_OnMusicChanged(object sender, EventArgs e)
-    {
-        foreach (Transform button in contentPanel)
-        {
-            MusicButton currentButton = button.GetComponent<MusicButton>();
-            if (currentButton.GetDir() == activeMusic)
-            {
-                currentButton.SetToggle(true);
-            }
-            else
-            {
-                currentButton.SetToggle(false);
-            }
-        }
-    }
-
-    private void MusicPlayer_OnMusicChanged(object sender, EventArgs e)
+    private void OnMusicChanged(object sender, EventArgs e)
     {
         foreach (Transform button in contentPanel)
         {
@@ -113,9 +125,14 @@ public class MusicList : MonoBehaviour
 
         for (int i = 0; i < linesList.Count; i++)
         {
-            if (linesList[i].StartsWith("Active = "))
+            if (linesList[i].StartsWith("BaseVolume = "))
+            {
+                linesList[i] = "BaseVolume = " + MusicPlayer.Instance.GetVolume().ToString();
+            }
+            else if (linesList[i].StartsWith("Active = "))
             {
                 linesList[i] = "Active = " + activeMusic;
+                Debug.Log("activeMusic is set to " + activeMusic);
             }
         }
 
@@ -125,5 +142,63 @@ public class MusicList : MonoBehaviour
             writer.WriteLine(line);
         }
         writer.Close();
+    }
+
+    private void SetUpMusicSettings()
+    {
+        pauseText = pauseButton.GetComponentInChildren<TextMeshProUGUI>();
+
+        stopButton.onClick.AddListener(() =>
+        {
+            MusicPlayer.Instance.Stop();
+            activeMusic = "None";
+            OnMusicChanged(this, EventArgs.Empty);
+            WriteSettings();
+        });
+        skipButton.onClick.AddListener(() =>
+        {
+            MusicPlayer.Instance.Skip();
+        });
+        pauseButton.onClick.AddListener(() =>
+        {
+            MusicPlayer.Instance.Pause();
+        });
+        volSlider.onValueChanged.AddListener(delegate {
+            MusicPlayer.Instance.SetVolume(volSlider.value);
+            WriteSettings();
+        });
+        folderButton.onClick.AddListener(() =>
+        {
+            string itemPath = (Application.persistentDataPath + "/music/activeMusic.ini");
+
+            // Get rid of forward slashes to appease explorer.exe.
+            itemPath = itemPath.Replace(@"/", @"\");   
+
+            System.Diagnostics.Process.Start("explorer.exe", "/select,"+itemPath);
+        });
+        refreshButton.onClick.AddListener(() =>
+        {
+            SetUpDir();
+            SetUpButtons();
+            OnMusicChanged(this, EventArgs.Empty);
+            Debug.Log("Refreshed!");
+        });
+    }
+
+    public void SetVolSlider(float input)
+    {
+        volSlider.value = input;
+    }
+
+    public void SetPauseText(string input)
+    {
+        pauseText.text = input;
+    }
+
+    public void SetInteractable(bool input)
+    {
+        stopButton.interactable = input;
+        pauseButton.interactable = input;
+        skipButton.interactable = input;
     }
 }

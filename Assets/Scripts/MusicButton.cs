@@ -25,10 +25,20 @@ public class MusicButton : MonoBehaviour
         });
     }
 
+    private void Start()
+    {
+        MusicPlayer.DisableMusicButtons += MusicPlayer_DisableMusicButtons;
+    }
+
     public void SetName(string text)
     {
         musicButton_Name = text;
         textMeshPro.text = musicButton_Name;
+    }
+
+    public string GetName()
+    {
+        return musicButton_Name;
     }
 
     public void SetDir(string inputDir)
@@ -44,5 +54,16 @@ public class MusicButton : MonoBehaviour
     public void SetToggle(bool input)
     {
         toggle.isOn = input;
+    }
+
+    private void MusicPlayer_DisableMusicButtons(object sender, EventArgs e)
+    {
+        button.interactable = false;
+        Invoke("EnableMusicButtons", 3);
+    }
+
+    private void EnableMusicButtons()
+    {
+        button.interactable = true;
     }
 }

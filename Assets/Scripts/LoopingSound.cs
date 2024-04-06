@@ -150,6 +150,7 @@ public class LoopingSound : MonoBehaviour
         dropdown.onValueChanged.AddListener(delegate {
             WriteSettings();
             StartCoroutine(FadeAudioSource.StartFade(Source, 3, 0f));
+            DisableDropdown();
         });
         volSlider.onValueChanged.AddListener(delegate {
             baseVolume = volSlider.value;
@@ -283,18 +284,18 @@ public class LoopingSound : MonoBehaviour
 
         for (int i = 0; i < linesList.Count; i++)
         {
-            if (linesList[i].StartsWith("CurrentSound = "))
+            if (linesList[i].StartsWith("BaseVolume = "))
+            {
+                linesList[i] = "BaseVolume = " + baseVolume.ToString();
+            }
+            else if (linesList[i].StartsWith("CurrentSound = "))
             {
                 linesList[i] = "CurrentSound = " + dropdown.options[dropdown.value].text;
             }
             else if (linesList[i].StartsWith("Active = "))
             {
                 linesList[i] = "Active = " + soundToggle.isOn.ToString();
-            }
-            else if (linesList[i].StartsWith("BaseVolume = "))
-            {
-                linesList[i] = "BaseVolume = " + baseVolume.ToString();
-            }
+            } 
         }
 
         StreamWriter writer = new StreamWriter(path, false);
@@ -303,5 +304,21 @@ public class LoopingSound : MonoBehaviour
             writer.WriteLine(line);
         }
         writer.Close();
+    }
+
+    private void DisableDropdown()
+    {
+        dropdown.interactable = false;
+        Invoke("EnableDropdown", 3);
+    }
+
+    private void EnableDropdown()
+    {
+        dropdown.interactable = true;
+    }
+
+    public void Silence()
+    {
+        StartCoroutine(FadeAudioSource.StartFade(Source, 3, 0f));
     }
 }
