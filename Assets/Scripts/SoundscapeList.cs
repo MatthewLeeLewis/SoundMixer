@@ -12,7 +12,7 @@ public class SoundscapeList : MonoBehaviour
     [SerializeField] private Transform buttonPrefab;
     private List<string> instantiatedButtons = new List<string>();
     [SerializeField] private Button plusButton;
-    [SerializeField] private Button refreshButton;
+    [SerializeField] private Button folderButton;
     private PlusButtonPanel plusButtonPanel;
 
     private List<string> dir = new List<string>(); // Instantiates a string array for directories.
@@ -28,6 +28,7 @@ public class SoundscapeList : MonoBehaviour
         Instance = this; // This instantiates the instance.
 
         plusButtonPanel = GetComponentInChildren<PlusButtonPanel>();
+        plusButtonPanel.SetDir("/soundscapes/");
 
         SetUpDir(); // Sets dir to the directories in the AppData path.
         SetUpButtons();
@@ -96,9 +97,14 @@ public class SoundscapeList : MonoBehaviour
         {
             plusButtonPanel.Show();
         });
-        refreshButton.onClick.AddListener(() =>
+        folderButton.onClick.AddListener(() =>
         {
-            
+            string itemPath = (Application.persistentDataPath + "/soundscapes/activeSoundscapes.ini");
+
+            // Get rid of forward slashes to appease explorer.exe.
+            itemPath = itemPath.Replace(@"/", @"\");   
+
+            System.Diagnostics.Process.Start("explorer.exe", "/select," + itemPath);
         });
     } 
 }

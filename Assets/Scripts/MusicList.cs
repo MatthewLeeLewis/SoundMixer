@@ -18,9 +18,10 @@ public class MusicList : MonoBehaviour
     [SerializeField] private Button skipButton;
     [SerializeField] private Slider volSlider;
     [SerializeField] private Button folderButton;
-    [SerializeField] private Button refreshButton;
+    [SerializeField] private Button plusButton;
     public string activeMusic = "None";
     private List<string> instantiatedButtons = new List<string>();
+    private PlusButtonPanel plusButtonPanel;
 
     private TextMeshProUGUI pauseText;
 
@@ -36,8 +37,12 @@ public class MusicList : MonoBehaviour
         }
         Instance = this; // This instantiates the instance.
 
+        plusButtonPanel = GetComponentInChildren<PlusButtonPanel>();
+        plusButtonPanel.SetDir("/music/");
+
         SetUpDir(); // Sets dir to the directories in the AppData path.
         SetUpButtons();
+        SetUpMiscButtons();
     }
 
     private void Start()
@@ -47,7 +52,7 @@ public class MusicList : MonoBehaviour
         SetUpMusicSettings();
     }
 
-    private void SetUpDir()
+    public void SetUpDir()
     {
         dir.Clear();
         string[] dirArray = Directory.GetDirectories(Application.persistentDataPath + "/music");
@@ -57,7 +62,7 @@ public class MusicList : MonoBehaviour
         }
     }
 
-    private void SetUpButtons()
+    public void SetUpButtons()
     {
         foreach (Transform button in contentPanel)
         {
@@ -167,22 +172,6 @@ public class MusicList : MonoBehaviour
             MusicPlayer.Instance.SetVolume(volSlider.value);
             WriteSettings();
         });
-        folderButton.onClick.AddListener(() =>
-        {
-            string itemPath = (Application.persistentDataPath + "/music/activeMusic.ini");
-
-            // Get rid of forward slashes to appease explorer.exe.
-            itemPath = itemPath.Replace(@"/", @"\");   
-
-            System.Diagnostics.Process.Start("explorer.exe", "/select,"+itemPath);
-        });
-        refreshButton.onClick.AddListener(() =>
-        {
-            SetUpDir();
-            SetUpButtons();
-            OnMusicChanged(this, EventArgs.Empty);
-            Debug.Log("Refreshed!");
-        });
     }
 
     public void SetVolSlider(float input)
@@ -201,4 +190,21 @@ public class MusicList : MonoBehaviour
         pauseButton.interactable = input;
         skipButton.interactable = input;
     }
+
+    private void SetUpMiscButtons()
+    {
+        plusButton.onClick.AddListener(() =>
+        {
+            plusButtonPanel.Show();
+        });
+        folderButton.onClick.AddListener(() =>
+        {
+            string itemPath = (Application.persistentDataPath + "/music/activeMusic.ini");
+
+            // Get rid of forward slashes to appease explorer.exe.
+            itemPath = itemPath.Replace(@"/", @"\");   
+
+            System.Diagnostics.Process.Start("explorer.exe", "/select," + itemPath);
+        });
+    } 
 }

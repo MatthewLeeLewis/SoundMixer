@@ -11,6 +11,7 @@ public class PlusButtonPanel : MonoBehaviour
     [SerializeField] private Button acceptButton;
     [SerializeField] private Button cancelButton; 
     private TMP_InputField inputField;
+    private string dir;
 
     private void Awake()
     {
@@ -25,14 +26,22 @@ public class PlusButtonPanel : MonoBehaviour
         });
         acceptButton.onClick.AddListener(() =>
         {
-            if (inputField.text != null && !Directory.Exists(Application.persistentDataPath + "/soundscapes/" + inputField.text))
+            if (inputField.text != null && !Directory.Exists(Application.persistentDataPath + dir + inputField.text))
             {
                 if (!inputField.text.Contains("\\") && !inputField.text.Contains("/"))
                 {
-                    Directory.CreateDirectory(Application.persistentDataPath + "/soundscapes/" + inputField.text);
+                    Directory.CreateDirectory(Application.persistentDataPath + dir + inputField.text);
                     
-                    SoundscapeList.Instance.SetUpDir();
-                    SoundscapeList.Instance.SetUpButtons();
+                    if (dir == "/soundscapes/")
+                    {
+                        SoundscapeList.Instance.SetUpDir();
+                        SoundscapeList.Instance.SetUpButtons();
+                    }
+                    else if (dir == "/music/")
+                    {
+                        MusicList.Instance.SetUpDir();
+                        MusicList.Instance.SetUpButtons();
+                    }
                     
                     Hide();
                 }
@@ -47,5 +56,10 @@ public class PlusButtonPanel : MonoBehaviour
     private void Hide() 
     {
         gameObject.SetActive(false);
+    }
+
+    public void SetDir(string input)
+    {
+        dir = input;
     }
 }

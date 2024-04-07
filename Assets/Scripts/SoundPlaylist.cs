@@ -28,11 +28,18 @@ public class SoundPlaylist : MonoBehaviour
     [SerializeField] private TMP_InputField volVarInput;
     private Slider volSlider;
     private float baseVolume;
+    [SerializeField] private Button deleteButton;
 
     private void Awake()
     {
+        deleteButton.gameObject.SetActive(false);
         Source = GetComponent<AudioSource>();
         volSlider = GetComponentInChildren<Slider>();
+    }
+
+    private void Start()
+    {
+        ActiveSoundscapes.Instance.ToggleDeleteMode += ActiveSoundscapes_ToggleDeleteMode;
     }
 
     private void Update()
@@ -328,5 +335,18 @@ public class SoundPlaylist : MonoBehaviour
     public void Silence()
     {
         StartCoroutine(FadeAudioSource.StartFade(Source, 3, 0f));
+    }
+
+    private void ActiveSoundscapes_ToggleDeleteMode(object sender, bool deleteMode)
+    {
+        if (gameObject != null)
+        {
+            deleteButton.gameObject.SetActive(deleteMode);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        ActiveSoundscapes.Instance.ToggleDeleteMode -= ActiveSoundscapes_ToggleDeleteMode;
     }
 }

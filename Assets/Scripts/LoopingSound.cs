@@ -21,6 +21,7 @@ public class LoopingSound : MonoBehaviour
     List<string> Files = new List<string>();
     List<AudioClip> Tracks = new List<AudioClip>();
     private float baseVolume;
+    [SerializeField] private Button deleteButton;
 
     private void Update()
     {
@@ -37,10 +38,16 @@ public class LoopingSound : MonoBehaviour
     }
     private void Awake()
     {
+        deleteButton.gameObject.SetActive(false);
         dropdown = GetComponentInChildren<TMP_Dropdown>();
         dropdown.ClearOptions();
         Source = GetComponent<AudioSource>();
         volSlider = GetComponentInChildren<Slider>();
+    }
+
+    private void Start()
+    {
+        ActiveSoundscapes.Instance.ToggleDeleteMode += ActiveSoundscapes_ToggleDeleteMode;
     }
     private void SetUp()
     {
@@ -320,5 +327,18 @@ public class LoopingSound : MonoBehaviour
     public void Silence()
     {
         StartCoroutine(FadeAudioSource.StartFade(Source, 3, 0f));
+    }
+
+    private void ActiveSoundscapes_ToggleDeleteMode(object sender, bool deleteMode)
+    {
+        if (gameObject != null)
+        {
+            deleteButton.gameObject.SetActive(deleteMode);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        ActiveSoundscapes.Instance.ToggleDeleteMode -= ActiveSoundscapes_ToggleDeleteMode;
     }
 }

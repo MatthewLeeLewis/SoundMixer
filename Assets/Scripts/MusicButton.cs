@@ -14,9 +14,11 @@ public class MusicButton : MonoBehaviour
     [SerializeField] private Toggle toggle;
     private string dir;
     private string musicButton_Name = "";
+    [SerializeField] private Button deleteButton;
 
     private void Awake()
     {
+        deleteButton.gameObject.SetActive(false);
         button.onClick.AddListener(() =>
         {
             MusicList.Instance.SetActiveMusic(dir);
@@ -28,6 +30,7 @@ public class MusicButton : MonoBehaviour
     private void Start()
     {
         MusicPlayer.DisableMusicButtons += MusicPlayer_DisableMusicButtons;
+        ActiveSoundscapes.Instance.ToggleDeleteMode += ActiveSoundscapes_ToggleDeleteMode;
     }
 
     public void SetName(string text)
@@ -65,5 +68,19 @@ public class MusicButton : MonoBehaviour
     private void EnableMusicButtons()
     {
         button.interactable = true;
+    }
+
+    private void ActiveSoundscapes_ToggleDeleteMode(object sender, bool deleteMode)
+    {
+        if (gameObject != null)
+        {
+            deleteButton.gameObject.SetActive(deleteMode);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        ActiveSoundscapes.Instance.ToggleDeleteMode -= ActiveSoundscapes_ToggleDeleteMode;
+        MusicPlayer.DisableMusicButtons -= MusicPlayer_DisableMusicButtons;
     }
 }

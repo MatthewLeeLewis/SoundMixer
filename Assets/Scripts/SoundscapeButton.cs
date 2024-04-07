@@ -13,17 +13,24 @@ public class SoundscapeButton : MonoBehaviour
     [SerializeField] private Toggle toggle;
     private string dir;
     private string soundscapeName;
+    [SerializeField] private Button deleteButton;
     
     public static event EventHandler OnSoundscapesChanged;
 
     private void Awake()
     {
+        deleteButton.gameObject.SetActive(false);
         button.onClick.AddListener(() =>
         {
             UpdateActiveDirectories();
             OnSoundscapesChanged?.Invoke(this, EventArgs.Empty);
             DisableSoundscapeButtons();
         });
+    }
+
+    private void Start()
+    {
+        ActiveSoundscapes.Instance.ToggleDeleteMode += ActiveSoundscapes_ToggleDeleteMode;
     }
 
     public void SetName(string text)
@@ -105,5 +112,18 @@ public class SoundscapeButton : MonoBehaviour
     private void EnableSoundscapeButtons()
     {
         button.interactable = true;
+    }
+
+    private void ActiveSoundscapes_ToggleDeleteMode(object sender, bool deleteMode)
+    {
+        if (gameObject != null)
+        {
+            deleteButton.gameObject.SetActive(deleteMode);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        ActiveSoundscapes.Instance.ToggleDeleteMode -= ActiveSoundscapes_ToggleDeleteMode;
     }
 }

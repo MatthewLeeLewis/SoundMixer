@@ -2,11 +2,13 @@ using System.Collections;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using System.IO;
 
 public class ActiveSoundscapes : MonoBehaviour
 {
     public static ActiveSoundscapes Instance { get; private set; }
+    public event EventHandler<bool> ToggleDeleteMode;
 
     private List<string> instantiatedSoundscapes;
 
@@ -14,6 +16,9 @@ public class ActiveSoundscapes : MonoBehaviour
     [SerializeField] private Transform soundscapePrefab;
 
     private List<string> activeSoundscapes; 
+
+    [SerializeField] private Button deleteModeButton;
+    private bool deleteMode = false;
 
     private void Awake()
     {
@@ -35,6 +40,11 @@ public class ActiveSoundscapes : MonoBehaviour
     private void Start()
     {
         SoundscapeButton.OnSoundscapesChanged += SoundscapeButton_OnSoundscapesChanged;
+        deleteModeButton.onClick.AddListener(() =>
+        {
+            deleteMode = !deleteMode;
+            ToggleDeleteMode?.Invoke(this, deleteMode);
+        });
     }
 
     private void SetUpSoundscapes()
@@ -116,6 +126,7 @@ public class ActiveSoundscapes : MonoBehaviour
             {
                 instantiatedSoundscapes.Remove(soundScape.GetName());
                 Destroy(soundscape.gameObject);
+                Destroy(soundscape);
             }
         }
     }
