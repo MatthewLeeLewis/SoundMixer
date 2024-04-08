@@ -98,6 +98,11 @@ public class MusicList : MonoBehaviour
         WriteSettings();
     }
 
+    public string GetActiveMusic()
+    {
+        return activeMusic;
+    }
+
     private void OnMusicChanged(object sender, EventArgs e)
     {
         foreach (Transform button in contentPanel)

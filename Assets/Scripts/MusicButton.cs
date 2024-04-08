@@ -25,6 +25,15 @@ public class MusicButton : MonoBehaviour
             MusicPlayer.Instance.SetDirectory(dir);
             OnMusicChanged?.Invoke(this, EventArgs.Empty);
         });
+        deleteButton.onClick.AddListener(() =>
+        {
+            if (MusicList.Instance.GetActiveMusic() == dir)
+            {
+                MusicList.Instance.SetActiveMusic("None");
+            }
+            Destroy(this.gameObject);
+            Destroy(this);
+        });
     }
 
     private void Start()
