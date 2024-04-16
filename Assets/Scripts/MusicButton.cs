@@ -15,10 +15,14 @@ public class MusicButton : MonoBehaviour
     private string dir;
     private string musicButton_Name = "";
     [SerializeField] private Button deleteButton;
+    [SerializeField] private Transform deletePanel;
+    [SerializeField] private Button confirmDelete;
+    [SerializeField] private TMP_InputField deletionInputField;
 
     private void Awake()
     {
         deleteButton.gameObject.SetActive(false);
+        deletePanel.gameObject.SetActive(false);
         button.onClick.AddListener(() =>
         {
             MusicList.Instance.SetActiveMusic(dir);
@@ -27,12 +31,22 @@ public class MusicButton : MonoBehaviour
         });
         deleteButton.onClick.AddListener(() =>
         {
-            if (MusicList.Instance.GetActiveMusic() == dir)
+            deletePanel.gameObject.SetActive(true);
+        });
+        confirmDelete.onClick.AddListener(() =>
+        {
+            if (deletionInputField.text == musicButton_Name)
             {
-                MusicList.Instance.SetActiveMusic("None");
+                if (MusicList.Instance.GetActiveMusic() == dir)
+                {
+                    MusicList.Instance.SetActiveMusic("None");
+                }
+                Directory.Delete(dir, true);
+                MusicList.Instance.SetUpDir();
+                MusicList.Instance.SetUpButtons();
+                MusicPlayer.Instance.Stop();
             }
-            Destroy(this.gameObject);
-            Destroy(this);
+            deletePanel.gameObject.SetActive(false);
         });
     }
 

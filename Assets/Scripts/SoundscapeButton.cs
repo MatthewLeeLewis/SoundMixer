@@ -14,17 +14,38 @@ public class SoundscapeButton : MonoBehaviour
     private string dir;
     private string soundscapeName;
     [SerializeField] private Button deleteButton;
-    
+    [SerializeField] private Transform deletePanel;
+    [SerializeField] private Button confirmDelete;
+    [SerializeField] private TMP_InputField deletionInputField;
+
     public static event EventHandler OnSoundscapesChanged;
 
     private void Awake()
     {
+        deleteButton.gameObject.SetActive(false);
+        deletePanel.gameObject.SetActive(false);
         deleteButton.gameObject.SetActive(false);
         button.onClick.AddListener(() =>
         {
             UpdateActiveDirectories();
             OnSoundscapesChanged?.Invoke(this, EventArgs.Empty);
             DisableSoundscapeButtons();
+        });
+        deleteButton.onClick.AddListener(() =>
+        {
+            deletePanel.gameObject.SetActive(true);
+        });
+        confirmDelete.onClick.AddListener(() =>
+        {
+            if (deletionInputField.text == soundscapeName)
+            {
+                RemoveSoundscapeFromActive();
+                OnSoundscapesChanged?.Invoke(this, EventArgs.Empty);
+                Directory.Delete(dir, true);
+                SoundscapeList.Instance.SetUpDir();
+                SoundscapeList.Instance.SetUpButtons();
+            }
+            deletePanel.gameObject.SetActive(false);
         });
     }
 
@@ -96,6 +117,44 @@ public class SoundscapeButton : MonoBehaviour
             writer.WriteLine(soundscapeName);
             writer.Close();
         }  
+    }
+
+    private void RemoveSoundscapeFromActive()
+    {
+        string path = Application.persistentDataPath + "/soundscapes/activeSoundscapes.ini";
+
+        StreamReader reader = new StreamReader(path);
+
+        List<string> linesList = new List<string>();
+        while (reader.Peek() >= 0)
+        {
+            linesList.Add(reader.ReadLine());
+        }
+
+        reader.Close();
+
+        if (linesList.Contains(soundscapeName))
+        {
+            linesList.Remove(soundscapeName);
+        }
+
+        StreamWriter writer = new StreamWriter(path, false);
+
+        if (linesList.Count != 0)
+        {
+            foreach (string line in linesList)
+            {
+                writer.WriteLine(line);
+            }
+            writer.Close();
+        }
+        else
+        {
+            writer.Write("");
+            writer.Close();
+        }
+
+        ActiveSoundscapes.Instance.RemoveSoundscape(soundscapeName);
     }
     
     public void SetToggle(bool input)

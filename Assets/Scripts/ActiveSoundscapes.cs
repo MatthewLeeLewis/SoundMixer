@@ -49,19 +49,9 @@ public class ActiveSoundscapes : MonoBehaviour
 
     private void SetUpSoundscapes()
     {
-        /*
-        foreach (Transform soundscape in contentPanel)
-        {
-            Soundscape soundScape = soundscape.GetComponent<Soundscape>();
-            if (!activeSoundscapes.Contains(soundScape.GetName()))
-            {
-                Destroy(soundscape.gameObject);
-            }
-        }
-        */
         foreach (string name in activeSoundscapes)
         {
-            if (!instantiatedSoundscapes.Contains(name))
+            if (!instantiatedSoundscapes.Contains(name) && name != "")
             {
                 Transform newSoundscapeTransform = Instantiate(soundscapePrefab, contentPanel.transform);
                 Soundscape newSoundscape = newSoundscapeTransform.GetComponent<Soundscape>();

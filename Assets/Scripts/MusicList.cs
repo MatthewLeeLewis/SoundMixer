@@ -23,8 +23,6 @@ public class MusicList : MonoBehaviour
     private List<string> instantiatedButtons = new List<string>();
     private PlusButtonPanel plusButtonPanel;
 
-    private TextMeshProUGUI pauseText;
-
     private List<string> dir = new List<string>(); // Instantiates a string array for directories.
 
     private void Awake()
@@ -142,7 +140,6 @@ public class MusicList : MonoBehaviour
             else if (linesList[i].StartsWith("Active = "))
             {
                 linesList[i] = "Active = " + activeMusic;
-                Debug.Log("activeMusic is set to " + activeMusic);
             }
         }
 
@@ -156,8 +153,6 @@ public class MusicList : MonoBehaviour
 
     private void SetUpMusicSettings()
     {
-        pauseText = pauseButton.GetComponentInChildren<TextMeshProUGUI>();
-
         stopButton.onClick.AddListener(() =>
         {
             MusicPlayer.Instance.Stop();
@@ -182,11 +177,6 @@ public class MusicList : MonoBehaviour
     public void SetVolSlider(float input)
     {
         volSlider.value = input;
-    }
-
-    public void SetPauseText(string input)
-    {
-        pauseText.text = input;
     }
 
     public void SetInteractable(bool input)

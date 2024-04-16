@@ -124,29 +124,62 @@ public class MusicPlayer : MonoBehaviour
     async Task<AudioClip> LoadClip(string path)
     {
         AudioClip clip = null;
-        using (UnityWebRequest uwr = UnityWebRequestMultimedia.GetAudioClip(path, AudioType.WAV))
+        if (path.EndsWith(".wav"))
         {
-            uwr.SendWebRequest();
-
-            try
+            using (UnityWebRequest uwr = UnityWebRequestMultimedia.GetAudioClip(path, AudioType.WAV))
             {
-                while (!uwr.isDone) await Task.Delay(5);
+                uwr.SendWebRequest();
 
-                if (uwr.error != null)  
+                try
                 {
-                    Debug.Log($"{uwr.error}");
+                    while (!uwr.isDone) await Task.Delay(5);
+
+                    if (uwr.error != null)  
+                    {
+                        Debug.Log($"{uwr.error}");
+                    }
+                    else
+                    {
+                        clip = DownloadHandlerAudioClip.GetContent(uwr);
+                    }
                 }
-                else
+                catch (Exception err)
                 {
-                    clip = DownloadHandlerAudioClip.GetContent(uwr);
+                    Debug.Log($"{err.Message}, {err.StackTrace}");
                 }
             }
-            catch (Exception err)
-            {
-                Debug.Log($"{err.Message}, {err.StackTrace}");
-            }
-        }
         return clip;
+        }
+        else if (path.EndsWith(".mp3"))
+        {
+            using (UnityWebRequest uwr = UnityWebRequestMultimedia.GetAudioClip(path, AudioType.MPEG))
+            {
+                uwr.SendWebRequest();
+
+                try
+                {
+                    while (!uwr.isDone) await Task.Delay(5);
+
+                    if (uwr.error != null)  
+                    {
+                        Debug.Log($"{uwr.error}");
+                    }
+                    else
+                    {
+                        clip = DownloadHandlerAudioClip.GetContent(uwr);
+                    }
+                }
+                catch (Exception err)
+                {   
+                    Debug.Log($"{err.Message}, {err.StackTrace}");
+                }
+            }
+        return clip;
+        }
+        else
+        {
+            return null;
+        }
     }
 
     public async void SetDirectory(string dir)
@@ -203,6 +236,7 @@ public class MusicPlayer : MonoBehaviour
     {
         if (active == true)
         {
+            paused = false;
             MusicList.Instance.SetInteractable(false);
             StartCoroutine(FadeAudioSource.StartFade(Source, 3, 0f));
             DisableMusicButtons?.Invoke(this, EventArgs.Empty);
@@ -215,12 +249,10 @@ public class MusicPlayer : MonoBehaviour
             if (paused)
             {
                 Source.Play();
-                MusicList.Instance.SetPauseText("Pause");
             }
             else
             {
                 Source.Pause();
-                MusicList.Instance.SetPauseText("Play");
             }
             paused = !paused;
         }
@@ -237,6 +269,11 @@ public class MusicPlayer : MonoBehaviour
                 StartCoroutine(FadeAudioSource.StartFade(Source, 3, 0f));
                 DisableMusicButtons?.Invoke(this, EventArgs.Empty);
             }
+            else if (paused == true)
+            {
+                paused = false;
+                Stop();
+            }
         } 
     }
 
@@ -244,7 +281,6 @@ public class MusicPlayer : MonoBehaviour
     {
         active = false;
         paused = false;
-        MusicList.Instance.SetPauseText("Pause");
         MusicList.Instance.SetInteractable(false);
     }
     private void EngageActive()

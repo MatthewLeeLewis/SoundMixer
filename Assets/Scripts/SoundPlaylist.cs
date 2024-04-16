@@ -10,13 +10,16 @@ using System.Threading.Tasks;
 
 public class SoundPlaylist : MonoBehaviour
 {
-    private AudioSource Source;
+    [SerializeField] private AudioSource Source, Source2, Source3;
     private AudioClip track;
     private string playerName;
+    private string parentDir;
     private string dir;
     private float minTime;
     private float maxTime;
     private float volVar;
+    private float pitchVar;
+    private float panVar;
     private bool set = false;
     private bool initialized = false;
     [SerializeField] private TextMeshProUGUI textMeshPro;
@@ -25,16 +28,22 @@ public class SoundPlaylist : MonoBehaviour
     List<AudioClip> Tracks = new List<AudioClip>();
     [SerializeField] private TMP_InputField minTimeInput;
     [SerializeField] private TMP_InputField maxTimeInput;
-    [SerializeField] private TMP_InputField volVarInput;
-    private Slider volSlider;
+    [SerializeField] private Slider volSlider;
+    [SerializeField] private Slider volVarSlider;
+    [SerializeField] private Slider pitchVarSlider;
+    [SerializeField] private Slider panVarSlider;
     private float baseVolume;
     [SerializeField] private Button deleteButton;
+    [SerializeField] private Transform deletePanel;
+    [SerializeField] private Button confirmDelete;
+    [SerializeField] private TMP_InputField deletionInputField;
+    [SerializeField] private Toggle overlapToggle;
 
     private void Awake()
     {
+        deletePanel.gameObject.SetActive(false);
         deleteButton.gameObject.SetActive(false);
-        Source = GetComponent<AudioSource>();
-        volSlider = GetComponentInChildren<Slider>();
+        // Source = GetComponent<AudioSource>();
     }
 
     private void Start()
@@ -80,32 +89,80 @@ public class SoundPlaylist : MonoBehaviour
         SetUp();
     }
 
+    public void SetParentDir(string input)
+    {
+        parentDir = input;
+    }
+
     private void PlaySound()
     {
+        AudioSource activeSource = new AudioSource();
         if (Tracks.Count != 0)
         {
             int _listIndex = UnityEngine.Random.Range(0, Tracks.Count);
 
             track = Tracks[_listIndex];
-            Source.clip = track;
 
-            float minimumVolume = baseVolume - volVar;
-            float maximumVolume = baseVolume + volVar;
-
-            if (maximumVolume > 1f)
+            if (Source.isPlaying)
             {
-                maximumVolume = 1f;
+                if (!Source2.isPlaying)
+                {
+                    activeSource = Source2;
+                }
+                else if (!Source3.isPlaying)
+                {
+                    activeSource = Source3;
+                }
             }
-            if (minimumVolume <= 0f)
+            else
             {
-                minimumVolume = 0.01f;
+                activeSource = Source;
             }
 
-            Source.volume = UnityEngine.Random.Range(minimumVolume, maximumVolume);
-            Debug.Log("Volume Sound Played at: " + Source.volume.ToString());
-            Source.Play();
+            if (activeSource != null)
+            {
+                activeSource.clip = track;
 
-            Invoke("ResetPlayer", Source.clip.length);
+                // Calculate and set Volume using volVar
+                float minimumVolume = (baseVolume - (baseVolume*volVar));
+                float maximumVolume = (baseVolume + (baseVolume*volVar));
+
+                if (minimumVolume <= 0f){minimumVolume = 0.001f;}
+                if (maximumVolume > 1f){maximumVolume = 1f;}
+
+                activeSource.volume = UnityEngine.Random.Range(minimumVolume, maximumVolume);
+
+                // Calculate and set pitch using pitchVar
+                float maximumPitch = 1f + pitchVar;
+                float minimumPitch = 0.999f - pitchVar;
+
+                activeSource.pitch = UnityEngine.Random.Range(minimumPitch, maximumPitch);
+
+                // Calculate and set panning using panVar
+                float minimumPan = 0f - panVar;
+                float maximumPan = 0f + panVar;
+
+                activeSource.panStereo = UnityEngine.Random.Range(minimumPan, maximumPan);
+
+                // Play the sound and reset the player when the sound finishes
+                activeSource.Play();
+            }
+
+            if (overlapToggle.isOn)
+            {
+                ResetPlayer();
+            }
+            else
+            {
+                if (activeSource != null)
+                {
+                    Invoke("ResetPlayer", activeSource.clip.length / Math.Abs(Source.pitch));
+                }
+                else
+                {
+                    ResetPlayer();
+                }
+            }
         } 
         else 
         {
@@ -128,7 +185,7 @@ public class SoundPlaylist : MonoBehaviour
         foreach (FileInfo file in files)
         {
             string fileString = file.ToString();
-            if (fileString.EndsWith(".wav"))
+            if (fileString.EndsWith(".wav") || fileString.EndsWith(".mp3"))
             {
                 Files.Add(fileString);
 
@@ -162,7 +219,6 @@ public class SoundPlaylist : MonoBehaviour
                 minTime = float.Parse(subStrings[1]);
                 if (minTime < 0.0f){minTime = 0.0f;}
                 minTimeInput.text = minTime.ToString();
-                Debug.Log("MinTime = " + minTime);
             }
             else if (linesList[i].StartsWith("MaxTime = "))
             {
@@ -171,15 +227,30 @@ public class SoundPlaylist : MonoBehaviour
                 if (maxTime < 0.0f){maxTime = 0.0f;}
                 if (maxTime < minTime){maxTime = minTime;}
                 maxTimeInput.text = maxTime.ToString();
-                Debug.Log("MaxTime = " + maxTime);
             }
             else if (linesList[i].StartsWith("VolVar = "))
             {
                 string[] subStrings = linesList[i].Split(" = ");
                 volVar = float.Parse(subStrings[1]);
                 if (volVar < 0.0f){volVar = 0.0f;}
-                volVarInput.text = volVar.ToString();
-                Debug.Log("VolVar = " + volVar);
+                if (volVar > 1.0f){volVar = 1.0f;}
+                volVarSlider.value = volVar;
+            }
+            else if (linesList[i].StartsWith("PitchVar = "))
+            {
+                string[] subStrings = linesList[i].Split(" = ");
+                pitchVar = float.Parse(subStrings[1]);
+                if (pitchVar < 0.0f){pitchVar = 0.0f;}
+                if (pitchVar > 0.1f){pitchVar = 0.1f;}
+                pitchVarSlider.value = pitchVar;
+            }
+            else if (linesList[i].StartsWith("PanVar = "))
+            {
+                string[] subStrings = linesList[i].Split(" = ");
+                panVar = float.Parse(subStrings[1]);
+                if (panVar < 0.0f){panVar = 0.0f;}
+                if (panVar > 1.0f){panVar = 1.0f;}
+                panVarSlider.value = panVar;
             }
             else if (linesList[i].StartsWith("BaseVolume = "))
             {
@@ -188,12 +259,16 @@ public class SoundPlaylist : MonoBehaviour
                 if (baseVolume < 0.01f){baseVolume = 0.01f;}
                 else if (baseVolume > 1.0f){baseVolume = 1.0f;}
                 volSlider.value = baseVolume;
-                Debug.Log("Base Volume = " + baseVolume);
             }
             else if (linesList[i].StartsWith("Active = "))
             {
                 string[] subStrings = linesList[i].Split(" = ");
                 soundToggle.isOn = Convert.ToBoolean(subStrings[1]);
+            }
+            else if (linesList[i].StartsWith("Overlap = "))
+            {
+                string[] subStrings = linesList[i].Split(" = ");
+                overlapToggle.isOn = Convert.ToBoolean(subStrings[1]);
             }
         }
     }
@@ -202,7 +277,6 @@ public class SoundPlaylist : MonoBehaviour
     {
         minTimeInput.onValueChanged.AddListener(delegate {
             minTime = float.Parse(minTimeInput.text);
-            Debug.Log("MinTime = " + minTime);
             if (minTime < 0.0f)
             {
                 minTime = 0.0f;
@@ -217,7 +291,6 @@ public class SoundPlaylist : MonoBehaviour
         });
         maxTimeInput.onValueChanged.AddListener(delegate {
             maxTime = float.Parse(maxTimeInput.text);
-            Debug.Log("MaxTime = " + maxTime);
             if (maxTime < 0.0f)
             {
                 maxTime = 0.0f;
@@ -230,63 +303,151 @@ public class SoundPlaylist : MonoBehaviour
             }
             WriteSettings();
         });
-        volVarInput.onValueChanged.AddListener(delegate {
-            volVar = float.Parse(volVarInput.text);
-            Debug.Log("VolVar = " + volVar);
-            if (volVar > 1.0f)
-            {
-                volVar = 1.0f;
-                volVarInput.text = volVar.ToString();
-            }
-            else if (volVar < 0.0f)
-            {
-                volVar = 0.0f;
-                volVarInput.text = volVar.ToString();
-            }
-            WriteSettings();
-        });
         soundToggle.onValueChanged.AddListener(delegate {
-            WriteSettings();
-            if (!soundToggle.isOn)
+            if (Tracks.Count > 0)
             {
-                StartCoroutine(FadeAudioSource.StartFade(Source, 3, 0f));
+                WriteSettings();
+                if (!soundToggle.isOn)
+                {
+                    StartCoroutine(FadeAudioSource.StartFade(Source, 3, 0f));
+                }
             }
+            else
+            {
+                soundToggle.isOn = false;
+            }
+        });
+        overlapToggle.onValueChanged.AddListener(delegate {
+            WriteSettings();
         });
         volSlider.onValueChanged.AddListener(delegate {
             baseVolume = volSlider.value;
             WriteSettings();
+        });
+        volVarSlider.onValueChanged.AddListener(delegate {
+            volVar = volVarSlider.value;
+            WriteSettings();
+        });
+        pitchVarSlider.onValueChanged.AddListener(delegate {
+            pitchVar = pitchVarSlider.value;
+            WriteSettings();
+        });
+        panVarSlider.onValueChanged.AddListener(delegate {
+            panVar = panVarSlider.value;
+            WriteSettings();
+        });
+        deleteButton.onClick.AddListener(() =>
+        {
+            deletePanel.gameObject.SetActive(true);
+        });
+        confirmDelete.onClick.AddListener(() =>
+        {
+            if (deletionInputField.text == playerName)
+            {
+                if (Source.isPlaying)
+                {
+                    Silence();
+                }
+
+                // Read settings to a list
+                StreamReader reader = new StreamReader(parentDir + "/settings.ini");
+                List<string> linesList = new List<string>();
+                while (reader.Peek() >= 0)
+                {
+                    linesList.Add(reader.ReadLine());
+                }
+                reader.Close();
+
+                // Rewrite the list
+                StreamWriter writer = new StreamWriter(parentDir + "/settings.ini", false);
+                for (int i = 0; i < linesList.Count; i++)
+                {
+                    if (linesList[i].StartsWith(playerName))
+                    {
+                        linesList.Remove(linesList[i]);
+                    }
+                }
+                foreach (string line in linesList)
+                {
+                    writer.WriteLine(line);
+                }
+                writer.Close();
+
+                Directory.Delete(dir, true);
+
+                confirmDelete.interactable = false;
+                Invoke("DeleteSoundPlayer", 3f);
+                
+            }
+            else
+            {
+                deletePanel.gameObject.SetActive(false);
+            }
         });
     }
 
     async Task<AudioClip> LoadClip(string path)
     {
         AudioClip clip = null;
-        using (UnityWebRequest uwr = UnityWebRequestMultimedia.GetAudioClip(path, AudioType.WAV))
+        if (path.EndsWith(".wav"))
         {
-            uwr.SendWebRequest();
-
-            try
+            using (UnityWebRequest uwr = UnityWebRequestMultimedia.GetAudioClip(path, AudioType.WAV))
             {
-                while (!uwr.isDone) await Task.Delay(5);
+                uwr.SendWebRequest();
 
-                if (uwr.error != null)  
+                try
                 {
-                    Debug.Log($"{uwr.error}");
+                    while (!uwr.isDone) await Task.Delay(5);
+
+                    if (uwr.error != null)  
+                    {
+                        Debug.Log($"{uwr.error}");
+                    }
+                    else
+                    {
+                        clip = DownloadHandlerAudioClip.GetContent(uwr);
+                    }
                 }
-                else
-                {
-                    clip = DownloadHandlerAudioClip.GetContent(uwr);
+                catch (Exception err)
+                {   
+                    Debug.Log($"{err.Message}, {err.StackTrace}");
                 }
             }
-            catch (Exception err)
-            {
-                Debug.Log($"{err.Message}, {err.StackTrace}");
-            }
-        }
         return clip;
+        }
+        else if (path.EndsWith(".mp3"))
+        {
+            using (UnityWebRequest uwr = UnityWebRequestMultimedia.GetAudioClip(path, AudioType.MPEG))
+            {
+                uwr.SendWebRequest();
+
+                try
+                {
+                    while (!uwr.isDone) await Task.Delay(5);
+
+                    if (uwr.error != null)  
+                    {
+                        Debug.Log($"{uwr.error}");
+                    }
+                    else
+                    {
+                        clip = DownloadHandlerAudioClip.GetContent(uwr);
+                    }
+                }
+                catch (Exception err)
+                {   
+                    Debug.Log($"{err.Message}, {err.StackTrace}");
+                }
+            }
+        return clip;
+        }
+        else
+        {
+            return null;
+        }
     }
 
-    private void WriteSettings()
+    public void WriteSettings()
     {
         string path = dir + "/settings.ini";
 
@@ -314,6 +475,14 @@ public class SoundPlaylist : MonoBehaviour
             {
                 linesList[i] = "VolVar = " + volVar.ToString();
             }
+            else if (linesList[i].StartsWith("PitchVar = "))
+            {
+                linesList[i] = "PitchVar = " + pitchVar.ToString();
+            }
+            else if (linesList[i].StartsWith("PanVar = "))
+            {
+                linesList[i] = "PanVar = " + panVar.ToString();
+            }
             else if (linesList[i].StartsWith("BaseVolume = "))
             {
                 linesList[i] = "BaseVolume = " + baseVolume.ToString();
@@ -321,6 +490,10 @@ public class SoundPlaylist : MonoBehaviour
             else if (linesList[i].StartsWith("Active = "))
             {
                 linesList[i] = "Active = " + soundToggle.isOn.ToString();
+            }
+            else if (linesList[i].StartsWith("Overlap = "))
+            {
+                linesList[i] = "Overlap = " + overlapToggle.isOn.ToString();
             }
         }
 
@@ -348,5 +521,73 @@ public class SoundPlaylist : MonoBehaviour
     private void OnDestroy()
     {
         ActiveSoundscapes.Instance.ToggleDeleteMode -= ActiveSoundscapes_ToggleDeleteMode;
+    }
+
+    private void DeleteSoundPlayer()
+    {
+        Destroy(this.gameObject);
+        Destroy(this);
+    }
+
+    public string GetDir()
+    {
+        return dir;
+    }
+
+    public void SetBaseVolume(float inputVol)
+    {
+        if (inputVol < 0.01f){inputVol = 0.01f;}
+        else if (inputVol > 1.0f){inputVol = 1.0f;}
+        volSlider.value = inputVol;
+
+        baseVolume = inputVol;
+    }
+
+    public void SetVolVar(float inputVolVar)
+    {
+        if (inputVolVar < 0.0f){inputVolVar = 0.0f;}
+        else if (inputVolVar > 1.0f){inputVolVar = 1.0f;}
+        volVarSlider.value = inputVolVar;
+        volVar = inputVolVar;
+    }
+
+    public void SetPitchVar(float inputPitchVar)
+    {
+        if (inputPitchVar < 0.0f){inputPitchVar = 0.0f;}
+        else if (inputPitchVar > 0.1f){inputPitchVar = 0.1f;}
+        pitchVarSlider.value = inputPitchVar;
+        pitchVar = inputPitchVar;
+    }
+
+    public void SetPanVar(float inputPanVar)
+    {
+        if (inputPanVar < 0.0f){inputPanVar = 0.0f;}
+        else if (inputPanVar > 1.0f){inputPanVar = 1.0f;}
+        panVarSlider.value = inputPanVar;
+        panVar = inputPanVar;
+    }
+
+    public void SetMinTime(float inputMinTime)
+    {
+        if (inputMinTime < 0.0f){inputMinTime = 0.0f;}
+        minTimeInput.text = inputMinTime.ToString();
+        minTime = inputMinTime;
+    }
+
+    public void SetMaxTime(float inputMaxTime)
+    {
+        if (inputMaxTime < minTime){inputMaxTime = minTime;}
+        maxTimeInput.text = inputMaxTime.ToString();
+        maxTime = inputMaxTime;
+    }
+
+    public void SetOverlap(bool inputOverlap)
+    {
+        overlapToggle.isOn = inputOverlap;
+    }
+
+    public void SetActive(bool inputActive)
+    {
+        soundToggle.isOn = inputActive;
     }
 }

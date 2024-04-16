@@ -45,7 +45,15 @@ public class TypeDialogue : MonoBehaviour
                     {
                         mainSettingsWriter.WriteLine(inputField.text + " = " + "LoopToggle");
                         writer.WriteLine("BaseVolume = 1");
+                        writer.WriteLine("Pitch = 1");
+                        writer.WriteLine("Panning = 0");
                         writer.WriteLine("CurrentSound = ");
+                        writer.WriteLine("AutoMode = False");
+                        writer.WriteLine("VolVar = 0");
+                        writer.WriteLine("PanVar = 0");
+                        writer.WriteLine("PitchVar = 0");
+                        writer.WriteLine("MinTime = 5.5");
+                        writer.WriteLine("MaxTime = 10");
                         writer.WriteLine("Active = False");
                     }
                     else if (dropdown.value == 1) // Sound Playlist
@@ -53,9 +61,12 @@ public class TypeDialogue : MonoBehaviour
                         mainSettingsWriter.WriteLine(inputField.text + " = " + "Playlist");
                         writer.WriteLine("MinTime = 0.5");
                         writer.WriteLine("MaxTime = 5");
-                        writer.WriteLine("VolVar = 0.2");
+                        writer.WriteLine("VolVar = 0");
+                        writer.WriteLine("PitchVar = 0");
+                        writer.WriteLine("PanVar = 0");
                         writer.WriteLine("BaseVolume = 1");
                         writer.WriteLine("Active = False");
+                        writer.WriteLine("Overlap = False");
                     }
                     mainSettingsWriter.Close();
                     writer.Close();
